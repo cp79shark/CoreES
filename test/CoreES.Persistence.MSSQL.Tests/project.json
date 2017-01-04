@@ -1,17 +1,19 @@
 {
   "version": "1.0.0-*",
   "buildOptions": {
-    "debugType": "portable"
+    "debugType": "portable",
+    "copyToOutput": {
+      "include": [ "xunit.runner.json" ]
+    }
   },
   "dependencies": {
     "System.Runtime.Serialization.Primitives": "4.3.0",
     "xunit": "2.1.0",
+    "Moq": "4.6.38-alpha",
     "dotnet-test-xunit": "2.2.0-preview2-build1029",
     "FluentAssertions": "4.18.0",
-    "Newtonsoft.Json": "9.0.1",
     "CoreES": "1.0.0-*",
-    "CoreES.Persistence.MSSQL": "1.0.0-*",
-    "CoreES.Serialization.JSON": "1.0.0-*"
+    "CoreES.Persistence.MSSQL": "1.0.0-*"
   },
   "testRunner": "xunit",
   "frameworks": {

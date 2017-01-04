@@ -9,6 +9,7 @@ using System.Data.SqlClient;
 
 namespace CoreES.Tests
 {
+    /*
     public class EventStoreTests
     {
         private readonly Mock<IPersistEvents> persistence;
@@ -76,4 +77,5 @@ namespace CoreES.Tests
         public Type MetadataType { get; set; }
 
     }
+    */
 }

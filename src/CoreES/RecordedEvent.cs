@@ -5,14 +5,31 @@ using System.Threading.Tasks;
 
 namespace CoreES
 {
-    public class RecordedEvent
+    public sealed class RecordedEvent
     {
         public string EventStreamId { get; }
 
         public Guid EventId { get; }
 
-        public byte[] Data { get; }
+        public int EventNumber { get; }
 
-        public byte[] Metadata { get; }
+        public string EventType { get; }
+
+        public object Data { get; }
+
+        public object Metadata { get; }
+
+        public DateTime Created { get; }
+
+        public RecordedEvent(string EventStreamId, Guid EventId, int EventNumber, string EventType, object Data, object Metadata, DateTime Created)
+        {
+            this.EventStreamId = EventStreamId;
+            this.EventId = EventId;
+            this.EventNumber = EventNumber;
+            this.EventType = EventType;
+            this.Data = Data;
+            this.Metadata = Metadata;
+            this.Created = Created;
+        }
     }
 }

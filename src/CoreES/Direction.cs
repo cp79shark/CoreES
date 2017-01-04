@@ -5,7 +5,9 @@ using System.Threading.Tasks;
 
 namespace CoreES
 {
-    public interface ISerializeEvents
+    public enum ReadDirection
     {
+        Forward = 0,
+        Backward = 1
     }
 }

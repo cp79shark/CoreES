@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace CoreES
 {
-    public class EventData
+    public sealed class EventData
     {
         public Guid EventId { get; }
 

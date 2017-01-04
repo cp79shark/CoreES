@@ -1,5 +1,5 @@
-﻿using CoreES.Persistence.MSSql;
-using CoreES.Serialization.Json;
+﻿using CoreES.Persistence.MSSQL;
+using CoreES.Serialization.JSON;
 using FluentAssertions;
 using Newtonsoft.Json;
 using System;
@@ -20,11 +20,10 @@ namespace CoreES.AcceptanceTests
         {
             // given
             string connectionString = @"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=BasicESTests;Integrated Security=True;";
-            ISerializeEvents serializer = new JsonSerialization();
-            IPersistEvents persistence = new MSSqlPersistence(connectionString, serializer)
+            ISerializeObjects serializer = new JsonObjectSerializer();
+            IEventStore eventStore = new MSSQLEventStore(connectionString, serializer)
                 .DropEventStore()
                 .InitializeEventStore();
-            IEventStore eventStore = new EventStore(persistence);
             Guid eventId = Guid.NewGuid();
             string type = "My Type";
             string streamId = "1";
