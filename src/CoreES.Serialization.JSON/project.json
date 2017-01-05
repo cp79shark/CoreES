@@ -4,7 +4,8 @@
     "debugType": "portable"
   },
   "dependencies": {
-    "CoreES": "1.0.0-*"
+    "CoreES": "1.0.0-*",
+    "Newtonsoft.Json": "9.0.1"
   },
   "frameworks": {
     "netstandard1.6": {

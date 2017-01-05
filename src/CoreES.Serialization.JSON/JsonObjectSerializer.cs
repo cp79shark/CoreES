@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using System.Text;
 
 namespace CoreES.Serialization.JSON
 {
@@ -14,7 +16,8 @@ namespace CoreES.Serialization.JSON
 
         public byte[] Serialize(object Object)
         {
-            throw new NotImplementedException();
+            string json = JsonConvert.SerializeObject(Object, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All });
+            return Encoding.UTF8.GetBytes(json);
         }
     }
 }

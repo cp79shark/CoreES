@@ -41,6 +41,9 @@ namespace CoreES.Persistence.MSSQL.Tests
 
                 // then
                 DatabaseHelper.DatabaseExists(fixture.DatabaseServer, fixture.DatabaseName).Should().BeTrue();
+                DatabaseHelper.TableExists(fixture.DatabaseServer, fixture.DatabaseName, "DbVersionHistory").Should().BeTrue();
+                DatabaseHelper.TableExists(fixture.DatabaseServer, fixture.DatabaseName, "Events").Should().BeTrue();
+                DatabaseHelper.TableExists(fixture.DatabaseServer, fixture.DatabaseName, "Aggregates").Should().BeTrue();
             }
         }
 
@@ -74,6 +77,45 @@ namespace CoreES.Persistence.MSSQL.Tests
 
                 // then
                 DatabaseHelper.DatabaseExists(fixture.DatabaseServer, fixture.DatabaseName).Should().BeTrue();
+                DatabaseHelper.TableExists(fixture.DatabaseServer, fixture.DatabaseName, "DbVersionHistory").Should().BeTrue();
+                DatabaseHelper.TableExists(fixture.DatabaseServer, fixture.DatabaseName, "Events").Should().BeTrue();
+                DatabaseHelper.TableExists(fixture.DatabaseServer, fixture.DatabaseName, "Aggregates").Should().BeTrue();
+            }
+        }
+
+        [Collection("Database Tests")]
+        public class Given_An_Empty_Event_Store : IClassFixture<EmptyEventStore>
+        {
+            EmptyEventStore fixture;
+
+            public Given_An_Empty_Event_Store(EmptyEventStore fixture)
+            {
+                this.fixture = fixture;
+            }
+
+            [Fact]
+            public async Task Adding_A_New_Stream_Will_Add_The_Events_To_The_Store()
+            {
+                // given
+                string StreamId = "1";
+                int ExpectedVersion = 0;
+                EventData eventOne = new EventData(Guid.NewGuid(), "My EventOne", "My EventOne Data", "My EventOne Metadata");
+                EventData eventTwo = new EventData(Guid.NewGuid(), "My EventTwo", "My EventTwo Data", "My EventTwo Metadata");
+
+                List<EventData> events = new List<EventData>
+                {
+                    eventOne,
+                    eventTwo
+                };
+
+                // when
+                await fixture.sut.AppendToStreamAsync(StreamId, ExpectedVersion, events);
+
+                // then
+                var result = DatabaseHelper.GetEvents(fixture.DatabaseServer, fixture.DatabaseName);
+                result.Count().Should().Be(2);
+                result[0].Matches(StreamId, 1, eventOne);
+                result[1].Matches(StreamId, 2, eventTwo);
             }
         }
     }

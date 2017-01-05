@@ -16,7 +16,7 @@ namespace CoreES.AcceptanceTests
     public class EventStoreFeature
     {
         [Fact]
-        public void Can_Add_New_Stream()
+        public async Task Can_Add_New_Stream()
         {
             // given
             string connectionString = @"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=BasicESTests;Integrated Security=True;";
@@ -34,7 +34,7 @@ namespace CoreES.AcceptanceTests
             };
 
             // when
-            eventStore.AppendToStreamAsync(streamId, expectedVersion, events);
+            await eventStore.AppendToStreamAsync(streamId, expectedVersion, events);
 
             // then
             using (IDbConnection connection = new SqlConnection(connectionString))
@@ -44,6 +44,9 @@ namespace CoreES.AcceptanceTests
 
                 command.CommandText = "SELECT * from dbo.Events";
                 var reader = command.ExecuteReader();
+
+                reader.Read();
+
                 object data = reader["Data"];
                 byte[] dataBytes = (byte[])data;
 
