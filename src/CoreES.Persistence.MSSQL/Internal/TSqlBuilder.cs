@@ -42,6 +42,8 @@ BEGIN TRY
 		)
 		--CREATE UNIQUE NONCLUSTERED INDEX [IX_Events_Stream] ON [Events](StreamIdHash, EventNumber)
 
+        CREATE UNIQUE NONCLUSTERED INDEX [IX_Events_EventId] ON [Events](StreamIdHash, EventId)
+
 		CREATE TABLE [Aggregates]
 		(
 			[StreamId] CHAR(40) NOT NULL,

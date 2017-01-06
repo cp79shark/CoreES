@@ -136,5 +136,49 @@ namespace CoreES.Persistence.MSSQL.Tests
                 result[1].Matches(StreamId, 2, eventTwo);
             }
         }
+
+        [Collection(Collections.DatabaseTests)]
+        public class Given_A_Stream_With_Existing_Events
+        {
+            private readonly DatabaseFixture fixture;
+            private readonly EventStoreHelper eventStoreHelper;
+            private readonly IEventStore SUT;
+            private readonly string ExistingStreamId;
+            private readonly int CurrentPersistedVersion = 2;
+            private readonly EventData eventOne;
+            private readonly EventData eventTwo;
+
+            public Given_A_Stream_With_Existing_Events(DatabaseFixture fixture)
+            {
+                this.fixture = fixture;
+                this.SUT = new MSSQLEventStore(fixture.ConnectionString, new StringSerializer()).DropEventStore().InitializeEventStore();
+
+                ExistingStreamId = "1";
+                int ExpectedVersion = 0;
+                eventOne = new EventData(Guid.NewGuid(), "My EventOne", "My EventOne Data", "My EventOne Metadata");
+                eventTwo = new EventData(Guid.NewGuid(), "My EventTwo", "My EventTwo Data", "My EventTwo Metadata");
+
+                List<EventData> events = new List<EventData>
+                {
+                    eventOne,
+                    eventTwo
+                };
+
+                SUT.AppendToStreamAsync(ExistingStreamId, ExpectedVersion, events).Wait();
+
+                eventStoreHelper = new EventStoreHelper(fixture);
+                eventStoreHelper.DatabaseExists().Should().BeTrue();
+            }
+
+            [Fact]
+            public void Appending_An_Event_With_An_Existing_EventId_Will_Throw_An_Exception()
+            {
+                // when
+                Action action = () => { SUT.AppendToStreamAsync(ExistingStreamId, CurrentPersistedVersion, new EventData[] { eventOne }).Wait(); };
+
+                // then
+                action.ShouldThrow<DuplicateEventException>().WithMessage($"Duplicate event detected with id: {eventOne.EventId.ToString()}");
+            }
+        }
     }
 }

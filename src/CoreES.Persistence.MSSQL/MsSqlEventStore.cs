@@ -13,6 +13,7 @@ namespace CoreES.Persistence.MSSQL
 {
     public class MSSQLEventStore : IEventStore
     {
+        private const int UniqueIndexViolation = 2601;
         private readonly SqlConnectionStringBuilder EventStoreConnection;
         private readonly SqlConnectionStringBuilder MasterConnection;
         private readonly ISerializeObjects Serializer;
@@ -58,7 +59,19 @@ namespace CoreES.Persistence.MSSQL
                         DataParameter.Value = Serializer.Serialize(@event.Data);
                         MetadataParameter.Value = Serializer.Serialize(@event.Metadata);
                         CreatedParameter.Value = DateTime.UtcNow;
-                        await command.ExecuteNonQueryAsync(cancellationToken);
+                        try
+                        {
+                            await command.ExecuteNonQueryAsync(cancellationToken);
+                        }
+                        catch(SqlException ex)
+                        {
+                            if(ex.Number == UniqueIndexViolation && ex.Message.StartsWith("Cannot insert duplicate key row in object 'dbo.Events' with unique index 'IX_Events_EventId'."))
+                            {
+                                throw new DuplicateEventException(@event.EventId);
+                            }
+
+                            throw;
+                        }
 
                         ++EventNumber;
                     }
