@@ -1,24 +1,28 @@
-﻿using System;
+﻿using CoreES.Persistence.MSSQL.Tests.Fixtures;
+using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace CoreES.Persistence.MSSQL.Tests.Helpers
 {
-    public class DatabaseHelper
+    public class EventStoreHelper
     {
-        public static bool DatabaseExists(string Server, string Database)
-        {
-            string connectionString = $"Data Source={Server};Initial Catalog=master;Integrated Security=SSPI;";
+        private readonly DatabaseFixture fixture;
 
+        public EventStoreHelper(DatabaseFixture fixture)
+        {
+            this.fixture = fixture;
+        }
+
+        public bool DatabaseExists()
+        {
             // from http://stackoverflow.com/a/33782992
-            using (var connection = new SqlConnection(connectionString))
+            using (var connection = new SqlConnection(ConnectionStringFor("master")))
             {
-                using (var command = new SqlCommand($"SELECT db_id('{Database}')", connection))
+                using (var command = new SqlCommand($"SELECT db_id('{fixture.EventStoreDatabase}')", connection))
                 {
                     connection.Open();
                     return (command.ExecuteScalar() != DBNull.Value);
@@ -26,29 +30,9 @@ namespace CoreES.Persistence.MSSQL.Tests.Helpers
             }
         }
 
-        public static void DropDatabase(string Server, string Database)
+        public bool TableExists(string Table)
         {
-            string connectionString = $"Data Source={Server};Initial Catalog=master;Integrated Security=SSPI;";
-
-            using (IDbConnection connection = new SqlConnection(connectionString))
-            {
-                connection.Open();
-
-                var command = connection.CreateCommand();
-                command.CommandText = $"IF EXISTS(select * from sys.databases where name='{Database}') DROP DATABASE [{Database}]";
-
-                command.ExecuteNonQuery();
-
-                connection.Close();
-                SqlConnection.ClearAllPools();
-            }
-        }
-
-        public static bool TableExists(string Server, string Database, string Table)
-        {
-            string connectionString = $"Data Source={Server};Initial Catalog={Database};Integrated Security=SSPI;";
-
-            using (IDbConnection connection = new SqlConnection(connectionString))
+            using (var connection = new SqlConnection(ConnectionStringFor(fixture.EventStoreDatabase)))
             {
                 connection.Open();
 
@@ -70,11 +54,9 @@ namespace CoreES.Persistence.MSSQL.Tests.Helpers
             }
         }
 
-        public static List<EventRow> GetEvents(string Server, string Database)
+        public List<EventRow> GetEvents()
         {
-            string connectionString = $"Data Source={Server};Initial Catalog={Database};Integrated Security=SSPI;";
-
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = new SqlConnection(ConnectionStringFor(fixture.EventStoreDatabase)))
             {
                 connection.Open();
 
@@ -85,7 +67,7 @@ namespace CoreES.Persistence.MSSQL.Tests.Helpers
 
                 List<EventRow> events = new List<EventRow>();
 
-                while(eventsReader.Read())
+                while (eventsReader.Read())
                 {
                     events.Add(
                             new EventRow
@@ -107,6 +89,11 @@ namespace CoreES.Persistence.MSSQL.Tests.Helpers
 
                 return events;
             }
+        }
+
+        private string ConnectionStringFor(string DatabaseName)
+        {
+            return $"Data Source={fixture.DatabaseServer}; Initial Catalog={DatabaseName}; Integrated Security=SSPI";
         }
     }
 

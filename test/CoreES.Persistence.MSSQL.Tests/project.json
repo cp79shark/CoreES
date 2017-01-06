@@ -13,7 +13,8 @@
     "dotnet-test-xunit": "2.2.0-preview2-build1029",
     "FluentAssertions": "4.18.0",
     "CoreES": "1.0.0-*",
-    "CoreES.Persistence.MSSQL": "1.0.0-*"
+    "CoreES.Persistence.MSSQL": "1.0.0-*",
+    "Microsoft.DotNet.InternalAbstractions": "1.0.0"
   },
   "testRunner": "xunit",
   "frameworks": {
@@ -22,7 +23,8 @@
         "Microsoft.NETCore.App": {
           "type": "platform",
           "version": "1.1.0"
-        }
+        },
+        "Microsoft.CodeCoverage": "1.0.2"
       },
       "imports": [
         "dotnet5.4",

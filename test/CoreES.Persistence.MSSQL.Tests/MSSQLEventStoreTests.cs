@@ -13,84 +13,102 @@ namespace CoreES.Persistence.MSSQL.Tests
 {
     public class MSSQLEventStoreTests
     {
-        [Collection("Database Tests")]
-        public class Given_No_Database_Exists : IClassFixture<ValidDatabaseFixture>
+        [Collection(Collections.DatabaseTests)]
+        public class Given_No_EventStore_Database_Exists
         {
-            ValidDatabaseFixture fixture;
+            private readonly DatabaseFixture fixture;
+            private readonly EventStoreHelper eventStoreHelper;
+            private readonly IEventStore SUT;
 
-            public Given_No_Database_Exists(ValidDatabaseFixture fixture)
+            public Given_No_EventStore_Database_Exists(DatabaseFixture fixture)
             {
                 this.fixture = fixture;
+                this.SUT = new MSSQLEventStore(fixture.ConnectionString, new StringSerializer()).DropEventStore();
+
+                eventStoreHelper = new EventStoreHelper(fixture);
+                eventStoreHelper.DatabaseExists().Should().BeFalse();
             }
 
             [Fact]
             public void DropEventStore_Will_Be_Idempotent()
             {
                 // when
-                ((MSSQLEventStore)fixture.sut).DropEventStore();
+                ((MSSQLEventStore)SUT).DropEventStore();
 
                 // then
-                DatabaseHelper.DatabaseExists(fixture.DatabaseServer, fixture.DatabaseName).Should().BeFalse();
+                eventStoreHelper.DatabaseExists().Should().BeFalse();
             }
 
             [Fact]
             public void InitializeEventStore_Will_Create_A_New_Database()
             {
                 // when
-                ((MSSQLEventStore)fixture.sut).InitializeEventStore();
+                ((MSSQLEventStore)SUT).InitializeEventStore();
 
                 // then
-                DatabaseHelper.DatabaseExists(fixture.DatabaseServer, fixture.DatabaseName).Should().BeTrue();
-                DatabaseHelper.TableExists(fixture.DatabaseServer, fixture.DatabaseName, "DbVersionHistory").Should().BeTrue();
-                DatabaseHelper.TableExists(fixture.DatabaseServer, fixture.DatabaseName, "Events").Should().BeTrue();
-                DatabaseHelper.TableExists(fixture.DatabaseServer, fixture.DatabaseName, "Aggregates").Should().BeTrue();
+                eventStoreHelper.DatabaseExists().Should().BeTrue();
+                eventStoreHelper.TableExists("DbVersionHistory").Should().BeTrue();
+                eventStoreHelper.TableExists("Events").Should().BeTrue();
+                eventStoreHelper.TableExists("Aggregates").Should().BeTrue();
             }
         }
 
-        [Collection("Database Tests")]
-        public class Given_A_Database_Exists : IClassFixture<ValidDatabaseFixture>
+        [Collection(Collections.DatabaseTests)]
+        public class Given_An_EventStore_Database_Exists
         {
-            ValidDatabaseFixture fixture;
+            private readonly DatabaseFixture fixture;
+            private readonly EventStoreHelper eventStoreHelper;
+            private readonly IEventStore SUT;
 
-            public Given_A_Database_Exists(ValidDatabaseFixture fixture)
+            public Given_An_EventStore_Database_Exists(DatabaseFixture fixture)
             {
                 this.fixture = fixture;
+                this.SUT = new MSSQLEventStore(fixture.ConnectionString, new StringSerializer()).DropEventStore().InitializeEventStore();
 
-                ((MSSQLEventStore)this.fixture.sut).InitializeEventStore();
+                eventStoreHelper = new EventStoreHelper(fixture);
+                eventStoreHelper.DatabaseExists().Should().BeTrue();
             }
 
             [Fact]
             public void DropEventStore_Will_Remove_The_Database()
             {
                 // when
-                ((MSSQLEventStore)fixture.sut).DropEventStore();
+                ((MSSQLEventStore)SUT).DropEventStore();
 
                 // then
-                DatabaseHelper.DatabaseExists(fixture.DatabaseServer, fixture.DatabaseName).Should().BeFalse();
+                eventStoreHelper.DatabaseExists().Should().BeFalse();
             }
 
             [Fact]
             public void InitializeEventStore_Will_Be_Idempotent()
             {
                 // when
-                ((MSSQLEventStore)fixture.sut).InitializeEventStore();
+                ((MSSQLEventStore)SUT).InitializeEventStore();
 
                 // then
-                DatabaseHelper.DatabaseExists(fixture.DatabaseServer, fixture.DatabaseName).Should().BeTrue();
-                DatabaseHelper.TableExists(fixture.DatabaseServer, fixture.DatabaseName, "DbVersionHistory").Should().BeTrue();
-                DatabaseHelper.TableExists(fixture.DatabaseServer, fixture.DatabaseName, "Events").Should().BeTrue();
-                DatabaseHelper.TableExists(fixture.DatabaseServer, fixture.DatabaseName, "Aggregates").Should().BeTrue();
+                eventStoreHelper.DatabaseExists().Should().BeTrue();
+                eventStoreHelper.TableExists("DbVersionHistory").Should().BeTrue();
+                eventStoreHelper.TableExists("Events").Should().BeTrue();
+                eventStoreHelper.TableExists("Aggregates").Should().BeTrue();
             }
         }
 
-        [Collection("Database Tests")]
-        public class Given_An_Empty_Event_Store : IClassFixture<EmptyEventStore>
+        [Collection(Collections.DatabaseTests)]
+        public class Given_An_Empty_Event_Store
         {
-            EmptyEventStore fixture;
+            private readonly DatabaseFixture fixture;
+            private readonly EventStoreHelper eventStoreHelper;
+            private readonly IEventStore SUT;
 
-            public Given_An_Empty_Event_Store(EmptyEventStore fixture)
+            public Given_An_Empty_Event_Store(DatabaseFixture fixture)
             {
                 this.fixture = fixture;
+                eventStoreHelper = new EventStoreHelper(fixture);
+
+                this.SUT = new MSSQLEventStore(fixture.ConnectionString, new StringSerializer()).DropEventStore().InitializeEventStore();
+
+                eventStoreHelper = new EventStoreHelper(fixture);
+                eventStoreHelper.DatabaseExists().Should().BeTrue();
             }
 
             [Fact]
@@ -109,10 +127,10 @@ namespace CoreES.Persistence.MSSQL.Tests
                 };
 
                 // when
-                await fixture.sut.AppendToStreamAsync(StreamId, ExpectedVersion, events);
+                await SUT.AppendToStreamAsync(StreamId, ExpectedVersion, events);
 
                 // then
-                var result = DatabaseHelper.GetEvents(fixture.DatabaseServer, fixture.DatabaseName);
+                var result = eventStoreHelper.GetEvents();
                 result.Count().Should().Be(2);
                 result[0].Matches(StreamId, 1, eventOne);
                 result[1].Matches(StreamId, 2, eventTwo);
